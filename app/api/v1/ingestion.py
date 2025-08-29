@@ -36,7 +36,13 @@ for p in (UPLOAD_DIR, ARTIFACT_DIR):
 async def upload_file(file: UploadFile = File(...)):
     if not file.filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=400, detail="PDF만 허용")
-    dest = (UPLOAD_DIR / file.filename).resolve()
+    # 경로 내 포함된 디렉터리 요소 제거
+    filename = os.path.basename(file.filename)
+    dest = (UPLOAD_DIR / filename).resolve()
+    # 업로드 디렉터리 검증
+    if not dest.is_relative_to(UPLOAD_DIR):
+        raise HTTPException(status_code=400, detail="잘못된 파일 경로")
+
     # 중복 방지
     i = 1
     while dest.exists():
@@ -44,6 +50,10 @@ async def upload_file(file: UploadFile = File(...)):
         suffix = dest.suffix
         dest = (UPLOAD_DIR / f"{stem}_{i}{suffix}").resolve()
         i += 1
+
+    if not dest.is_relative_to(UPLOAD_DIR):
+        raise HTTPException(status_code=400, detail="잘못된 파일 경로")
+
     data = await file.read()
     dest.write_bytes(data)
     return UploadResponse(filename=dest.name, path=str(dest), size=len(data))
