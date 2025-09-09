@@ -20,7 +20,7 @@ def embed_text(text: str, model: str = "text-embedding-3-small") -> Tuple[List[f
     Returns:
         (생성된 벡터, 모델명, 벡터 차원)의 튜플.
     """
-    api_key = os.getenv("OPENAI_API")
+    api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
         raise ValueError("OPENAI_API_KEY 환경 변수가 설정되어 있지 않습니다")
 
