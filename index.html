@@ -38,7 +38,25 @@
     const $ = (sel) => document.querySelector(sel);
     function base() { return $('#base').value.replace(/\/$/, ''); }
 
+    let uploadedPath = null;
+    let processed = false;
+
     $('#ask').addEventListener('click', async () => {
+      // 업로드된 파일이 있고 아직 처리되지 않았다면 실행
+      if (uploadedPath && !processed) {
+        try {
+          const runRes = await fetch(base() + '/api/v1/ingestion/run', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pdf_path: uploadedPath })
+          });
+          $('#upOut').textContent = await runRes.text();
+          processed = true;
+        } catch (e) {
+          $('#upOut').textContent = String(e);
+        }
+      }
+
       const body = { question: $('#prompt').value };
       try {
         const res = await fetch(base() + '/api/v1/rag/query', {
@@ -62,7 +80,13 @@
           method: 'POST',
           body: fd
         });
-        $('#upOut').textContent = await res.text();
+        const txt = await res.text();
+        $('#upOut').textContent = txt;
+        try {
+          const data = JSON.parse(txt);
+          uploadedPath = data.path;
+          processed = false;
+        } catch {}
       } catch (e) {
         $('#upOut').textContent = String(e);
       }
