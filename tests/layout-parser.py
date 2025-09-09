@@ -89,7 +89,7 @@ analyzed_files = []
 for file in split_files:
     analyzed_files.append(analyzer.execute(file))
 
-analyzed_files
+
 
 class PDFImageProcessor:
     """

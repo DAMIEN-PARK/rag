@@ -1,11 +1,12 @@
 """텍스트 임베딩 생성을 위한 모듈."""
 from __future__ import annotations
-
+from dotenv import load_dotenv
 import os
 from typing import List, Tuple
 
 from openai import OpenAI
 
+load_dotenv(override=True)
 
 def embed_text(text: str, model: str = "text-embedding-3-small") -> Tuple[List[float], str, int]:
     """주어진 텍스트에 대한 임베딩 벡터를 생성한다.
@@ -19,7 +20,7 @@ def embed_text(text: str, model: str = "text-embedding-3-small") -> Tuple[List[f
     Returns:
         (생성된 벡터, 모델명, 벡터 차원)의 튜플.
     """
-    api_key = os.getenv("OPENAI_API_KEY")
+    api_key = os.getenv("OPENAI_API")
     if not api_key:
         raise ValueError("OPENAI_API_KEY 환경 변수가 설정되어 있지 않습니다")
 
