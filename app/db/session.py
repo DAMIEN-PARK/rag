@@ -33,6 +33,8 @@ def get_db_connection():
         raise ValueError(
             "Missing database configuration: " + ", ".join(missing)
         )
+    if psycopg2 is None:
+        raise ImportError("psycopg2 is required for direct DB connections")
     return psycopg2.connect(
         # host=base.server,
         # dbname=base.name,

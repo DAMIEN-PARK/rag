@@ -26,14 +26,13 @@ from app.schemas.ingestion import (
 # 모듈들은 사용자 분리 구조에 맞춰 import
 from app.services.ingestion.preprocess.split_pdf import split_pdf
 from app.services.ingestion.preprocess.analyzer_upstage import LayoutAnalyzer
-# from app.services.ingestion.preprocess.extract_assets import PDFImageProcessor
+from app.services.ingestion.preprocess.extract_assets import extract_blocks_and_images
+from app.services.ingestion.preprocess.render_html_md import render_all
 from app.services.chunk import (
     extract_text_from_pdf_upstage,
     chunk_text,
     get_embedding,
 )
-# render_html_md 가 별도면, PDFImageProcessor 내부에서 호출되도록 구성했거나 필요 시 아래 import 후 사용
-# from app.services.ingestion.preprocess.render_html_md import render_html_and_md
 
 load_dotenv(override=True)
 
@@ -118,16 +117,23 @@ def extract_endpoint(req: ExtractRequest):
         raise HTTPException(status_code=404, detail="pdf_path가 존재하지 않음")
     # 산출물은 ARTIFACT_DIR/<원본파일명>/ 구조로 저장
     base = ARTIFACT_DIR / pdf.stem
-    proc = PDFImageProcessor(str(pdf), output_folder=str(base))
-    proc.extract_images()  # 이미지추출 메서드 실행 html/md 생성
-    images = sorted([str(p.resolve()) for p in base.glob("page_*_figure_*.png")])
-    html_path = base / f"{pdf.stem}.html"
-    md_path = base / f"{pdf.stem}.md"
+
+    json_paths = sorted(pdf.parent.glob(f"{pdf.stem}_*.json"))
+    if not json_paths:
+        raise HTTPException(status_code=404, detail="연관된 JSON 파일이 없습니다")
+    blocks, images = extract_blocks_and_images(
+        pdf_path=str(pdf),
+        json_paths=[str(p) for p in json_paths],
+        out_dir=str(base),
+    )
+    render_result = render_all(blocks, out_dir=str(base), base_name=pdf.stem)
+    images = [str(Path(p).resolve()) for p in images]
     return ExtractResponse(
         output_folder=str(base.resolve()),
         images=images,
-        html_path=str(html_path.resolve()),
-        md_path=str(md_path.resolve()),
+        html_path=str(Path(render_result["html_path"]).resolve()),
+        md_path=str(Path(render_result["md_path"]).resolve()),
+        blocks=blocks,
     )
 
 # --- 전체 파이프라인 실행 ---
@@ -194,11 +200,16 @@ def run_endpoint(req: RunRequest, db: Session = Depends(get_db)):
             )
 
     base = ARTIFACT_DIR / pdf.stem
-    proc = PDFImageProcessor(str(pdf), output_folder=str(base))
-    proc.extract_images()
-    images = sorted([str(p.resolve()) for p in base.glob("page_*_figure_*.png")])
-    html_path = base / f"{base.name}.html"
-    md_path = base / f"{base.name}.md"
+    blocks, images = extract_blocks_and_images(
+        pdf_path=str(pdf),
+        json_paths=list(json_paths.values()),
+        out_dir=str(base),
+    )
+    render_result = render_all(blocks, out_dir=str(base), base_name=base.name)
+    images = [str(Path(p).resolve()) for p in images]
+    md_path = Path(render_result["md_path"])
+    html_path = Path(render_result["html_path"])
+
     # 4) chunking & embedding
     with md_path.open("r", encoding="utf-8") as f:
         md_text = f.read()
@@ -209,7 +220,7 @@ def run_endpoint(req: RunRequest, db: Session = Depends(get_db)):
     dim: Optional[int] = None
     for c in chunk_texts:
         vec, model_name = get_embedding(c)
-        dim =len(vec)
+        dim = len(vec)
         embeddings.append(vec)
 
     return RunResponse(
@@ -219,6 +230,7 @@ def run_endpoint(req: RunRequest, db: Session = Depends(get_db)):
         html_path=str(html_path.resolve()),
         md_path=str(md_path.resolve()),
         images=images,
+        blocks=blocks,
         chunks=chunk_texts,
         embeddings=embeddings,
         embedding_model=model_name,
