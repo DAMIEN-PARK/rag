@@ -3,254 +3,70 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>RAG 로컬 테스트 프론트</title>
+  <title>RAG 라우터 테스트</title>
   <style>
-    :root { --gap: 10px; --pad: 12px; }
-    body { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans KR", sans-serif; margin: 0; background:#0b0c0e; color:#e9eef3; }
-    header { padding: var(--pad); border-bottom: 1px solid #1f2937; background:#0f1115; position: sticky; top: 0; }
-    main { display: grid; gap: var(--gap); grid-template-columns: 1fr; padding: var(--pad); }
-    .card { background:#0f1115; border:1px solid #1f2937; border-radius: 12px; padding: var(--pad); }
-    .row { display:flex; gap: var(--gap); flex-wrap: wrap; }
-    label { font-size: 12px; color:#aeb8c4; display:block; margin-bottom: 6px; }
-    input[type="text"], input[type="url"], textarea { width:100%; background:#0b0c10; color:#e9eef3; border:1px solid #263041; border-radius:8px; padding:10px; box-sizing:border-box; }
-    input[type="file"] { width:100%; }
-    textarea { min-height: 92px; }
-    button { background:#1f6feb; color:white; border:none; border-radius:8px; padding:10px 14px; cursor:pointer; }
-    button.secondary { background:#263041; }
-    button:disabled { opacity:.5; cursor:not-allowed; }
-    .grid-2 { display:grid; gap: var(--gap); grid-template-columns: 1fr; }
-    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: pre-wrap; word-break: break-word; }
-    .hint { font-size:12px; color:#8aa0b7; }
-    @media (min-width: 980px) { .grid-2 { grid-template-columns: 1fr 1fr; } }
+    body { font-family: sans-serif; max-width: 680px; margin: 0 auto; padding: 20px; }
+    textarea { width: 100%; min-height: 120px; }
+    input[type="url"], input[type="file"] { width: 100%; }
+    pre { background: #f4f4f4; padding: 10px; white-space: pre-wrap; }
+    section { margin-bottom: 32px; }
   </style>
 </head>
 <body>
-<header>
-  <div class="row" style="align-items:end; gap:16px;">
-    <div style="min-width:280px; flex:1;">
-      <label>API Base URL</label>
-      <input id="base" type="url" value="http://localhost:5000" />
-      <div class="hint">예: http://localhost:5000</div>
-    </div>
-    <div style="min-width:280px; flex:1;">
-      <label>Bearer Token (옵션)</label>
-      <input id="token" type="text" placeholder="JWT 또는 API 키" />
-    </div>
-    <div>
-      <button id="ping" class="secondary">서버 연결 확인</button>
-    </div>
-  </div>
-</header>
+  <h1>간단한 RAG 테스트</h1>
 
-<main>
-  <section class="card">
-    <h3 style="margin-top:0">엔드포인트 경로</h3>
-    <div class="grid-2">
-      <div>
-        <label>질의→검색→생성 (POST)</label>
-        <input id="ragPath" type="text" value="/api/v1/rag/query" />
-        <div class="hint">서버 구현에 맞게 수정 가능</div>
-      </div>
-      <div>
-        <label>파일 업로드 (POST, multipart/form-data)</label>
-        <input id="uploadPath" type="text" value="/api/v1/ingestion/upload" />
-        <div class="hint">인제스트 업로드: /api/v1/ingestion/upload</div>
-      </div>
-    </div>
+  <section>
+    <label>API Base URL</label>
+    <input id="base" type="url" value="http://localhost:5000" />
   </section>
 
-  <section class="card">
-    <h3 style="margin-top:0">RAG 질의 테스트</h3>
-    <div class="grid-2">
-      <div>
-        <label>project_id (옵션)</label>
-        <input id="projectId" type="text" placeholder="예: demo" />
-      </div>
-      <div>
-        <label>session_id (옵션)</label>
-        <input id="sessionId" type="text" placeholder="세션 없으면 비워두기" />
-      </div>
-    </div>
-    <div style="margin-top:10px;">
-      <label>질문</label>
-      <textarea id="question" placeholder="여기에 질문을 입력"></textarea>
-    </div>
-    <div class="row" style="margin-top:10px; align-items:center;">
-      <button id="ask">질의 보내기</button>
-      <span class="hint">Body는 서버의 QueryRequest 스키마에 맞춤</span>
-    </div>
-    <div id="ragOut" class="mono" style="margin-top:12px;"></div>
+  <section>
+    <h2>LLM 프롬프트</h2>
+    <textarea id="prompt" placeholder="질문을 입력하세요"></textarea><br />
+    <button id="ask">질의 보내기</button>
+    <pre id="askOut"></pre>
   </section>
 
-  <section class="card">
-    <h3 style="margin-top:0">파일 업로드 테스트</h3>
-    <div class="grid-2">
-      <div>
-        <label>project_id (옵션)</label>
-        <input id="upProjectId" type="text" placeholder="예: demo" />
-      </div>
-      <div>
-        <label>메타데이터(JSON, 옵션)</label>
-        <input id="upMeta" type="text" placeholder='{"source":"local"}' />
-      </div>
-    </div>
-    <div style="margin-top:10px;">
-      <input id="file" type="file" />
-    </div>
-    <div class="row" style="margin-top:10px; align-items:center;">
-      <button id="upload">업로드</button>
-      <span class="hint">Form 필드: file, project_id, meta</span>
-    </div>
-    <div id="upOut" class="mono" style="margin-top:12px;"></div>
+  <section>
+    <h2>파일 업로드</h2>
+    <input id="file" type="file" /><br />
+    <button id="upload">업로드</button>
+    <pre id="upOut"></pre>
   </section>
 
-  <section class="card">
-    <h3 style="margin-top:0">Ingestion API 테스트</h3>
-    <div class="grid-2">
-      <div>
-        <label>pdf_path</label>
-        <input id="pdfPath" type="text" placeholder="예: C:\\path\\to\\test.pdf" />
-      </div>
-      <div>
-        <label>batch_size</label>
-        <input id="batchSize" type="text" value="10" />
-      </div>
-    </div>
-    <div class="grid-2" style="margin-top:10px;">
-      <div>
-        <button id="btnSplit" class="secondary">/ingestion/split</button>
-      </div>
-      <div>
-        <button id="btnAnalyze" class="secondary">/ingestion/analyze</button>
-      </div>
-      <div>
-        <button id="btnExtract" class="secondary">/ingestion/extract</button>
-      </div>
-      <div>
-        <button id="btnRun" class="secondary">/ingestion/run</button>
-      </div>
-    </div>
-    <div id="ingestOut" class="mono" style="margin-top:12px;"></div>
-  </section>
+  <script>
+    const $ = (sel) => document.querySelector(sel);
+    function base() { return $('#base').value.replace(/\/$/, ''); }
 
-  <section class="card">
-    <h3 style="margin-top:0">원시 응답 미리보기</h3>
-    <div id="log" class="mono"></div>
-  </section>
-</main>
-
-<script>
-  const $ = (sel) => document.querySelector(sel);
-  const j = (obj) => JSON.stringify(obj, null, 2);
-
-  function base() { return $('#base').value.replace(/\/$/, ''); }
-  function headers(json=true) {
-    const h = json ? { 'Content-Type': 'application/json' } : {};
-    const t = $('#token').value.trim();
-    if (t) h['Authorization'] = 'Bearer ' + t;
-    return h;
-  }
-  function setOut(el, data) {
-    el.textContent = typeof data === 'string' ? data : j(data);
-    $('#log').textContent = el.textContent;
-  }
-
-  $('#ping').addEventListener('click', async () => {
-    const candidates = ['/health', '/openapi.json', '/docs'];
-    let ok = null, data = null;
-    for (const p of candidates) {
+    $('#ask').addEventListener('click', async () => {
+      const body = { question: $('#prompt').value };
       try {
-        const r = await fetch(base() + p, { headers: headers(false) });
-        if (r.ok) { ok = p; data = (p.endsWith('.json') ? await r.json() : await r.text()); break; }
-      } catch (_) {}
-    }
-    alert(ok ? `연결 성공: ${ok}` : '연결 실패: /health, /openapi.json, /docs 모두 응답 없음');
-  });
+        const res = await fetch(base() + '/api/v1/rag/query', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        $('#askOut').textContent = await res.text();
+      } catch (e) {
+        $('#askOut').textContent = String(e);
+      }
+    });
 
-  $('#ask').addEventListener('click', async () => {
-    const path = $('#ragPath').value.trim() || '/api/v1/rag/query';
-    const body = {
-      question: $('#question').value,
-      project_id: $('#projectId').value || undefined,
-      session_id: $('#sessionId').value || undefined
-    };
-    $('#ask').disabled = true;
-    try {
-      const res = await fetch(base() + path, {
-        method: 'POST',
-        headers: headers(true),
-        body: JSON.stringify(body)
-      });
-      const text = await res.text();
-      let data;
-      try { data = JSON.parse(text); } catch { data = text; }
-      setOut($('#ragOut'), data);
-    } catch (e) {
-      setOut($('#ragOut'), String(e));
-    } finally {
-      $('#ask').disabled = false;
-    }
-  });
-
-  $('#upload').addEventListener('click', async () => {
-    const f = $('#file').files[0];
-    if (!f) { alert('파일을 선택하세요'); return; }
-    const path = $('#uploadPath').value.trim() || '/api/v1/ingestion/upload';
-    const fd = new FormData();
-    fd.append('file', f, f.name);
-    const pid = $('#upProjectId').value.trim();
-    if (pid) fd.append('project_id', pid);
-    const meta = $('#upMeta').value.trim();
-    if (meta) fd.append('meta', meta);
-
-    $('#upload').disabled = true;
-    try {
-      const res = await fetch(base() + path, {
-        method: 'POST',
-        headers: headers(false),
-        body: fd
-      });
-      const text = await res.text();
-      let data;
-      try { data = JSON.parse(text); } catch { data = text; }
-      setOut($('#upOut'), data);
-    } catch (e) {
-      setOut($('#upOut'), String(e));
-    } finally {
-      $('#upload').disabled = false;
-    }
-  });
-
-  // Ingestion API buttons
-  async function postJSON(url, body, target) {
-    try {
-      const res = await fetch(url, { method: 'POST', headers: headers(true), body: JSON.stringify(body) });
-      const text = await res.text();
-      let data; try { data = JSON.parse(text); } catch { data = text; }
-      setOut(target, data);
-    } catch (e) { setOut(target, String(e)); }
-  }
-
-  $('#btnSplit').addEventListener('click', () => {
-    const body = { pdf_path: $('#pdfPath').value.trim(), batch_size: Number($('#batchSize').value || 10) };
-    postJSON(base() + '/api/v1/ingestion/split', body, $('#ingestOut'));
-  });
-
-  $('#btnAnalyze').addEventListener('click', () => {
-    const p = $('#pdfPath').value.trim();
-    const body = { pdf_paths: [p] }; // 키는 서버에서 .env 기본값 사용
-    postJSON(base() + '/api/v1/ingestion/analyze', body, $('#ingestOut'));
-  });
-
-  $('#btnExtract').addEventListener('click', () => {
-    const body = { pdf_path: $('#pdfPath').value.trim() };
-    postJSON(base() + '/api/v1/ingestion/extract', body, $('#ingestOut'));
-  });
-
-  $('#btnRun').addEventListener('click', () => {
-    const body = { pdf_path: $('#pdfPath').value.trim(), batch_size: Number($('#batchSize').value || 10) };
-    postJSON(base() + '/api/v1/ingestion/run', body, $('#ingestOut'));
-  });
-</script>
+    $('#upload').addEventListener('click', async () => {
+      const f = $('#file').files[0];
+      if (!f) { alert('파일을 선택하세요'); return; }
+      const fd = new FormData();
+      fd.append('file', f, f.name);
+      try {
+        const res = await fetch(base() + '/api/v1/ingestion/upload', {
+          method: 'POST',
+          body: fd
+        });
+        $('#upOut').textContent = await res.text();
+      } catch (e) {
+        $('#upOut').textContent = String(e);
+      }
+    });
+  </script>
 </body>
 </html>
