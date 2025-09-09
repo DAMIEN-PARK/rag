@@ -1,5 +1,5 @@
 import os
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Literal
 from pydantic import BaseModel, Field, FilePath
 
 # 업로드 완료 시 파일 메타 반환
@@ -40,12 +40,22 @@ class ExtractRequest(BaseModel):
     pdf_path: FilePath  # 같은 prefix의 *.json 을 자동 탐색
 
 # Asset 추출 및 렌더 결과
+class Block(BaseModel):
+    text: Optional[str] = None
+    block_type: Literal["text", "table", "figure"]
+    page_num: int
+    coords: Optional[Dict[str, float]] = None
+    caption: Optional[str] = None
+    html: Optional[str] = None
+
+
 class ExtractResponse(BaseModel):
-    """산출물 폴더, 생성된 이미지 목록, HTML/MD 경로"""
+    """산출물 폴더, 생성된 이미지 목록, HTML/MD 경로, 블록 정보"""
     output_folder: str
     images: List[str]
     html_path: str
     md_path: str
+    blocks: List[Block]
 
 # end-to-end 파이프라인 실행 요청
 class RunRequest(BaseModel):
@@ -65,6 +75,7 @@ class RunResponse(BaseModel):
     html_path: str
     md_path: str
     images: List[str]
+    blocks: Optional[List[Block]] = None
     chunks: Optional[List[str]] = None
     embeddings: Optional[List[List[float]]] = None
     embedding_model: Optional[str] = None
