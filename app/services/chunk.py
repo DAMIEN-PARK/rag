@@ -14,11 +14,16 @@ def extract_text_from_pdf_upstage(pdf_path: str | Path, api_key: str | None = No
     if not api_key:
         raise ValueError("UPSTAGE_API_KEY가 필요합니다.")
 
-    url = "https://api.upstage.ai/v1/document-ai/extract-text"
+    url = "https://api.upstage.ai/v1/information-extraction"
     headers = {"Authorization": f"Bearer {api_key}"}
     with open(pdf_path, "rb") as f:
-        resp = requests.post(url, headers=headers, files={"document": f})
-    resp.raise_for_status()
+        resp = requests.post(
+            url,
+            headers=headers,
+            files={"document": (Path(pdf_path).name, f, "application/pdf")},
+        )
+    resp = requests.post(url, headers=headers, files={"file": f})
+    print(resp.text)
     return resp.json()["text"]
 
 

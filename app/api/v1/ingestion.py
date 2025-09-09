@@ -26,9 +26,9 @@ from app.schemas.ingestion import (
 # 모듈들은 사용자 분리 구조에 맞춰 import
 from app.services.ingestion.preprocess.split_pdf import split_pdf
 from app.services.ingestion.preprocess.analyzer_upstage import LayoutAnalyzer
-from app.services.ingestion.preprocess.extract_assets import PDFImageProcessor
+# from app.services.ingestion.preprocess.extract_assets import PDFImageProcessor
 from app.services.chunk import (
-    extract_text_from_pdf,
+    extract_text_from_pdf_upstage,
     chunk_text,
     get_embedding,
 )
@@ -147,7 +147,6 @@ def run_endpoint(req: RunRequest, db: Session = Depends(get_db)):
     )
     parts = split_pdf(str(pdf), batch_size=req.batch_size)
 
-
     api_key = req.upstage_api_key or os.getenv("UPSTAGE_API_KEY")
     if not api_key:
         raise HTTPException(status_code=400, detail="UPSTAGE_API_KEY 필요")
@@ -172,7 +171,7 @@ def run_endpoint(req: RunRequest, db: Session = Depends(get_db)):
         documents.append((part, doc.id))
 
     for part, doc_id in documents:
-        text = extract_text_from_pdf(part)
+        text = extract_text_from_pdf_upstage(part)
         pieces = chunk_text(text)
         for order, piece in enumerate(pieces, start=1):
             chunk_db = crud.create_chunk(
@@ -209,7 +208,8 @@ def run_endpoint(req: RunRequest, db: Session = Depends(get_db)):
     model_name: Optional[str] = None
     dim: Optional[int] = None
     for c in chunk_texts:
-        vec, model_name, dim = embed_text(c)
+        vec, model_name = get_embedding(c)
+        dim =len(vec)
         embeddings.append(vec)
 
     return RunResponse(
