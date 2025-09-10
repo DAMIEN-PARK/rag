@@ -7,13 +7,11 @@ from langchain_core.documents import Document
 from langchain_core.language_models import BaseLanguageModel
 from langchain_core.vectorstores import InMemoryVectorStore, VectorStore
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
-
 from app.langchain.chains.qa_chain import build_qa_chain
 
 
 class RAGService:
     """질의 응답을 수행하는 간단한 RAG 서비스."""
-
     def __init__(self, vectorstore: VectorStore, llm: BaseLanguageModel):
         self.chain = build_qa_chain(vectorstore, llm)
 
