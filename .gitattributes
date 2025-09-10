@@ -1,4 +1,3 @@
 *.png binary
-*.toml binary
-*.md binary
-*.txt binary
+*.faiss binary
+*.index binary
