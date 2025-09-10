@@ -2,7 +2,11 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from app.core.settings import settings
 from app.db import base
-import psycopg2
+
+try:  # psycopg2가 설치되지 않은 환경에서도 동작하도록
+    import psycopg2  # type: ignore
+except Exception:  # pragma: no cover - 단순 폴백
+    psycopg2 = None  # type: ignore
 engine = create_engine(str(settings.DATABASE_URL), future=True)
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False, future=True)
 
