@@ -18,22 +18,26 @@ def build_qa_chain(vectorstore: VectorStore, llm: BaseLanguageModel, *, k: int =
         LangChain Runnable. ``invoke({"question": "..."})`` 형식으로 호출한다.
     """
     retriever = vectorstore.as_retriever(search_kwargs={"k": k})
+    format_docs = lambda docs: "\n\n".join(d.page_content for d in docs)
     prompt = PromptTemplate.from_template(
-        """You are an assistant for question-answering tasks. 
+        """You are an assistant for question-answering tasks.
 Use the following pieces of retrieved context to answer the question. 
-If you don't know the answer, just say that you don't know. 
+If you don't know the answer, just say that you don't know.
 Answer in Korean.
 
-#Question: 
-{question} 
-#Context: 
-{context} 
+#Question:
+{question}
+#Context:
+{context}
 
 #Answer:"""
     )
 
     chain = (
-        {"context": retriever, "question": RunnablePassthrough()}
+            {
+                "context": retriever | format_docs,
+                "question": RunnablePassthrough(),
+            }
         | prompt
         | llm
         | StrOutputParser()

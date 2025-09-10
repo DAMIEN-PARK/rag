@@ -5,11 +5,12 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.prompts import PromptTemplate
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+import numpy as np
 from dotenv import load_dotenv
 load_dotenv(override=True)
 
 # 단계 1: 문서 로드(Load Documents)
-loader = PyMuPDFLoader("file/ingestion/uploads/정부AI정책방향.pdf")
+loader = PyMuPDFLoader("")
 docs = loader.load()
 
 # 단계 2: 문서 분할(Split Documents)
@@ -30,15 +31,15 @@ retriever = vectorstore.as_retriever()
 # 단계 6: 프롬프트 생성(Create Prompt)
 # 프롬프트를 생성합니다.
 prompt = PromptTemplate.from_template(
-    """You are an assistant for question-answering tasks. 
-Use the following pieces of retrieved context to answer the question. 
-If you don't know the answer, just say that you don't know. 
+    """You are an assistant for question-answering tasks.
+Use the following pieces of retrieved context to answer the question.
+If you don't know the answer, just say that you don't know.
 Answer in Korean.
 
-#Question: 
-{question} 
-#Context: 
-{context} 
+#Question:
+{question}
+#Context:
+{context}
 
 #Answer:"""
 )
