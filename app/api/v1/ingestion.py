@@ -5,6 +5,7 @@ from starlette.concurrency import run_in_threadpool
 from pathlib import Path
 from typing import List, Dict, Optional
 import os
+import logging
 from dotenv import load_dotenv
 from sqlalchemy.orm import Session
 
@@ -37,6 +38,8 @@ from app.services.chunk import (
 load_dotenv(override=True)
 
 router = APIRouter(prefix="/ingestion", tags=["ingestion"])
+
+logger = logging.getLogger(__name__)
 
 STORAGE_ROOT = Path(os.getenv("INGESTION_STORAGE", "file/ingestion")).resolve()
 UPLOAD_DIR = STORAGE_ROOT / "uploads"
@@ -177,7 +180,14 @@ def run_endpoint(req: RunRequest, db: Session = Depends(get_db)):
         documents.append((part, doc.id))
 
     for part, doc_id in documents:
-        text = extract_text_from_pdf_upstage(part)
+        try:
+            text = extract_text_from_pdf_upstage(part)
+        except ValueError as e:
+            logger.error("텍스트 추출 실패: %s", e)
+            raise HTTPException(status_code=502, detail=str(e))
+        if not isinstance(text, str) or not text.strip():
+            logger.error("추출된 텍스트가 비어 있음: %s", part)
+            raise HTTPException(status_code=502, detail="텍스트 추출 실패")
         pieces = chunk_text(text)
         for order, piece in enumerate(pieces, start=1):
             chunk_db = crud.create_chunk(

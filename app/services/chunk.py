@@ -6,12 +6,16 @@ import os, requests
 import hashlib
 import numpy as np
 import json
+import logging
 # import fitz  # type: ignore
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_openai import OpenAIEmbeddings
 
 from dotenv import load_dotenv
 load_dotenv(override=True)
+
+logger = logging.getLogger(__name__)
+
 
 def extract_text_from_pdf_upstage(pdf_path: str | Path, api_key: str | None = None) -> str:
     api_key = api_key or os.getenv("UPSTAGE_API_KEY")
@@ -34,13 +38,24 @@ def extract_text_from_pdf_upstage(pdf_path: str | Path, api_key: str | None = No
         )
 
     if resp.status_code != 200:
+        snippet = (resp.text or "")[:200]
+        logger.error("Upstage API 응답 오류: %s", snippet)
         raise ValueError(f"예상치 못한 상태 코드: {resp.status_code}")
 
-    output_file = pdf_path.with_suffix(".json")
-    with output_file.open("w", encoding="utf-8") as out_f:
-        json.dump(resp.json(), out_f, ensure_ascii=False, indent=2)
+    try:
+        data = resp.json()
+    except ValueError as e:
+        logger.error("Upstage API JSON 파싱 실패: %s", e)
+        raise ValueError("Upstage API JSON 파싱 실패") from e
 
-    return str(output_file)
+    elements = data.get("elements", [])
+    texts = [el.get("text", "").strip() for el in elements if el.get("text")]
+    text = "\n".join(t for t in texts if t).strip()
+    if not text:
+        logger.error("Upstage API에서 추출된 텍스트가 비어 있음: %s", pdf_path)
+        raise ValueError("추출된 텍스트가 비어 있습니다.")
+
+    return text
 
 
 
