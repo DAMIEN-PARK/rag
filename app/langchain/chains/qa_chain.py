@@ -7,6 +7,7 @@ from langchain_core.output_parsers import StrOutputParser
 # from langchain_openai import ChatOpenAI
 from langchain_core.language_models import BaseLanguageModel
 from langchain_core.vectorstores import VectorStore
+from app.utils import format_docs
 # load_dotenv(find_dotenv())
 
 def build_qa_chain(vectorstore: VectorStore, llm: BaseLanguageModel, *, k: int = 4):
@@ -33,7 +34,7 @@ Answer in Korean.
     )
 
     chain = (
-        {"context": retriever, "question": RunnablePassthrough()}
+        {"context": retriever | format_docs, "question": RunnablePassthrough()}
         | prompt
         | llm
         | StrOutputParser()
