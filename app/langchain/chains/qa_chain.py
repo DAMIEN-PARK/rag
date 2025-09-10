@@ -10,7 +10,7 @@ from langchain_core.language_models import BaseLanguageModel
 
 # load_dotenv(find_dotenv())
 
-def build_qa_chain(vectorstore: Any,llm: BaseLanguageModel):
+def build_qa_chain(vectorstore: Any,llm: BaseLanguageModel, *, k: int = 4):
     """벡터스토어 기반 QA 체인을 생성한다.
     Args:
         vectorstore: ``as_retriever`` 메서드를 제공하는 벡터스토어 인스턴스.
@@ -18,7 +18,7 @@ def build_qa_chain(vectorstore: Any,llm: BaseLanguageModel):
     Returns:
         LangChain Runnable. ``invoke({"question": "..."})`` 형식으로 호출한다.
     """
-    retriever = vectorstore.as_retriever()
+    retriever = vectorstore.as_retriever(search_kwargs={"k": k})
     prompt = PromptTemplate.from_template(
         """You are an assistant for question-answering tasks. 
 Use the following pieces of retrieved context to answer the question. 
