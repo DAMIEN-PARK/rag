@@ -75,8 +75,8 @@ def get_embedding(text: str, dim: int = 1536) -> Tuple[List[float], str]:
     """Generate an embedding vector for the given text.
 
     If an OPENAI_API_KEY is present, use OpenAIEmbeddings via langchain.
-    Otherwise, fall back to a deterministic pseudo-random vector so that
-    tests can run without external services.
+    Otherwise, fall back to a deterministic pseudo-random vector without
+    requiring external services.
     Returns a tuple of (vector, model_name).
     """
     api_key = os.getenv("OPENAI_API_KEY")
