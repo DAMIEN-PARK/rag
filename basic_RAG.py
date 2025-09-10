@@ -7,6 +7,8 @@ from langchain_core.prompts import PromptTemplate
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 import numpy as np
 from dotenv import load_dotenv
+from app.utils import format_docs
+
 load_dotenv(override=True)
 
 # 단계 1: 문서 로드(Load Documents)
@@ -50,7 +52,7 @@ llm = ChatOpenAI(model_name="gpt-4o", temperature=0)
 
 # 단계 8: 체인(Chain) 생성
 chain = (
-    {"context": retriever, "question": RunnablePassthrough()}
+    {"context": retriever | format_docs, "question": RunnablePassthrough()}
     | prompt
     | llm
     | StrOutputParser()
