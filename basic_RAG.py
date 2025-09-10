@@ -12,7 +12,7 @@ from app.utils import format_docs
 load_dotenv(override=True)
 
 # 단계 1: 문서 로드(Load Documents)
-loader = PyMuPDFLoader("")
+loader = PyMuPDFLoader("file/ingestion/uploads/정부AI정책방향.pdf")
 docs = loader.load()
 
 # 단계 2: 문서 분할(Split Documents)
@@ -59,6 +59,6 @@ chain = (
 )
 # 체인 실행(Run Chain)
 # 문서에 대한 질의를 입력하고, 답변을 출력합니다.
-question = "AI 교육정책도 소개해줘"
+question = "마지막 페이지 요약해줘"
 response = chain.invoke(question)
 print(response)

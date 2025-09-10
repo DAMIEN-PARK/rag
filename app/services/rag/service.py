@@ -20,7 +20,12 @@ class RAGService:
         self.chain = build_qa_chain(vectorstore, llm)
 
     def query(self, question: str) -> str:
-        """질문을 받아 답변 문자열을 반환한다."""
+        """질문을 받아 답변 문자열을 반환한다.
+        예시:
+            >>> service.chain.invoke({"question": "LangChain이란?"})
+
+        체인을 직접 호출할 경우 문자열이 아닌 딕셔너리를 입력해야 한다.
+        """
         return self.chain.invoke({"question": question})
 
     def get_relevant_chunks(self, question: str, k: int = 4):
@@ -31,7 +36,6 @@ class RAGService:
 def _build_default_service() -> RAGService:
     """pgvector 기반 벡터 검색과 OpenAI LLM으로 구성된 RAGService 생성."""
 
-    # load_dotenv()
     db = SessionLocal()
     vectorstore = PGVectorStore(db, get_embedding)
     llm = ChatOpenAI(model_name="gpt-4o", temperature=0)
