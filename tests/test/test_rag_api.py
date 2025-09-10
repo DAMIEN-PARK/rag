@@ -1,19 +1,29 @@
 """RAG API 엔드포인트 테스트."""
-
+import os
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from langchain_core.documents import Document
 from langchain_core.embeddings import FakeEmbeddings
 from langchain_core.language_models import FakeListLLM
 from langchain_core.vectorstores import InMemoryVectorStore
-
+from langchain_community.vectorstores.pgvector import PGVector
 from app.api.v1.rag import router, get_rag_service
 from app.services.rag.service import RAGService
 
 
 def _create_service() -> RAGService:
     embedding = FakeEmbeddings(size=32)
-    store = InMemoryVectorStore(embedding=embedding)
+    database_url = os.environ.get("DATABASE_URL")
+    if database_url:
+        store = PGVector(
+            connection_string=database_url,
+            embedding_function=embedding,
+            collection_name="test_rag_api",
+            pre_delete_collection=True,
+        )
+    else:
+        store = InMemoryVectorStore(embedding=embedding)
+
     store.add_documents([Document(page_content="고양이는 귀엽다.")])
     llm = FakeListLLM(responses=["고양이는 정말 귀엽습니다."])
     return RAGService(store, llm)
