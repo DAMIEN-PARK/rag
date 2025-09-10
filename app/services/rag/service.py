@@ -21,7 +21,7 @@ class RAGService:
 
     def query(self, question: str) -> str:
         """질문을 받아 답변 문자열을 반환한다."""
-        return self.chain.invoke(question)
+        return self.chain.invoke({"question": question})
 
     def get_relevant_chunks(self, question: str, k: int = 4):
         """질문과 가장 유사한 청크 목록을 반환한다."""
