@@ -83,7 +83,6 @@ def create_chathistory(db: Session, log_in: ChatHistoryCreate) -> models.ChatHis
     db.refresh(db_obj)
     return db_obj
 
-
 def list_chathistory(db: Session) -> list[models.ChatHistory]:
     return db.query(models.ChatHistory).order_by(models.ChatHistory.created_at.desc()).all()
 
