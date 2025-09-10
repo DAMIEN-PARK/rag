@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from typing import Callable, List, Optional, Tuple
-
+from pydantic import ConfigDict
 from langchain_core.documents import Document
 from langchain_core.retrievers import BaseRetriever
 from sqlalchemy.orm import Session
@@ -10,10 +10,11 @@ from app.db import crud
 
 
 class PGVectorRetriever(BaseRetriever):
-    def __init__(self, db: Session, embed_fn: Callable[[str], Tuple[List[float], str]], k: int):
-        self.db = db
-        self.embed_fn = embed_fn
-        self.k = k
+    db: Session
+    embed_fn: Callable[[str], Tuple[List[float], str]]
+    k: int
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
 
     def _get_relevant_documents(self, query: str, run_manager=None) -> List[Document]:
         vector, _ = self.embed_fn(query)
@@ -43,4 +44,4 @@ class PGVectorStore:
         k = 4
         if search_kwargs and "k" in search_kwargs:
             k = search_kwargs["k"]
-        return PGVectorRetriever(self.db, self.embed_fn, k)
+        return PGVectorRetriever(db=self.db, embed_fn=self.embed_fn, k=k)
