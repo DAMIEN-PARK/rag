@@ -3,16 +3,19 @@ from __future__ import annotations
 from typing import Optional
 
 from dotenv import load_dotenv
-from langchain_core.documents import Document
 from langchain_core.language_models import BaseLanguageModel
-from langchain_core.vectorstores import InMemoryVectorStore, VectorStore
-from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+from langchain_openai import ChatOpenAI
+
 from app.langchain.chains.qa_chain import build_qa_chain
+from app.services.rag.vectorstore import PGVectorStore
+from app.services.chunk import get_embedding
+from app.db.session import SessionLocal
 
 
 class RAGService:
     """질의 응답을 수행하는 간단한 RAG 서비스."""
-    def __init__(self, vectorstore: VectorStore, llm: BaseLanguageModel):
+
+    def __init__(self, vectorstore: PGVectorStore, llm: BaseLanguageModel):
         self.chain = build_qa_chain(vectorstore, llm)
 
     def query(self, question: str) -> str:
@@ -21,12 +24,11 @@ class RAGService:
 
 
 def _build_default_service() -> RAGService:
-    """기본 InMemoryVectorStore와 OpenAI 기반 LLM로 구성된 RAGService 생성."""
+    """pgvector 기반 벡터 검색과 OpenAI LLM으로 구성된 RAGService 생성."""
 
     load_dotenv()
-    embedding = OpenAIEmbeddings()
-    vectorstore = InMemoryVectorStore(embedding=embedding)
-    vectorstore.add_documents([Document(page_content="고양이는 귀엽다.")])
+    db = SessionLocal()
+    vectorstore = PGVectorStore(db, get_embedding)
     llm = ChatOpenAI(model_name="gpt-4o", temperature=0)
     return RAGService(vectorstore, llm)
 
