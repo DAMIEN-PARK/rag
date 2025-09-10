@@ -45,3 +45,19 @@ class PGVectorStore:
         if search_kwargs and "k" in search_kwargs:
             k = search_kwargs["k"]
         return PGVectorRetriever(db=self.db, embed_fn=self.embed_fn, k=k)
+
+    def search(self, query: str, k: int = 4) -> List[Document]:
+        """주어진 질의와 가장 유사한 청크들을 반환한다."""
+        vector, _ = self.embed_fn(query)
+        results = crud.search_chunks_by_vector(self.db, vector, k)
+        return [
+            Document(
+                page_content=chunk.content,
+                metadata={
+                    "score": score,
+                    "chunk_id": chunk.id,
+                    "document_id": chunk.document_id,
+                },
+            )
+            for chunk, score in results
+        ]

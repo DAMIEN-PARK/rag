@@ -16,11 +16,16 @@ class RAGService:
     """질의 응답을 수행하는 간단한 RAG 서비스."""
 
     def __init__(self, vectorstore: PGVectorStore, llm: BaseLanguageModel):
+        self.vectorstore = vectorstore
         self.chain = build_qa_chain(vectorstore, llm)
 
     def query(self, question: str) -> str:
         """질문을 받아 답변 문자열을 반환한다."""
         return self.chain.invoke(question)
+
+    def get_relevant_chunks(self, question: str, k: int = 4):
+        """질문과 가장 유사한 청크 목록을 반환한다."""
+        return self.vectorstore.search(question, k)
 
 
 def _build_default_service() -> RAGService:
