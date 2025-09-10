@@ -157,6 +157,22 @@ ON chunk USING gin (content gin_trgm_ops);
 
 ## 사용법
 
+### 지원 파일 형식 및 제한
+
+현재 업로드/인제스트 파이프라인은 **PDF(`.pdf`)**만 지원합니다. 스캔한 이미지 기반 PDF는 OCR을 거치지 않으면 텍스트가 추출되지 않아 인제스트가 실패할 수 있습니다. PDF 이외의 확장자는 업로드 시 400 에러가 반환됩니다.
+
+추가 확장자를 지원하려면 다음 단계를 수행합니다(예: `.docx` 지원):
+
+1. `app/services/ingestion/loader.py`에 새로운 확장자 분기와 변환 로직을 추가합니다.
+2. `app/services/ingestion/preprocess/`에 해당 포맷을 PDF로 변환하거나 직접 파싱하는 모듈을 작성합니다(예: `convert_docx.py`).
+3. `app/services/ingestion/parser.py`에서 확장자별 전처리 모듈을 호출해 기존 파이프라인으로 넘겨줍니다.
+
+```python
+# loader.py 예시
+elif ext == ".docx":
+    input_pdf = convert_docx_to_pdf(upload_path)
+```
+
 ### 파일 업로드 및 인제스트
 
 ```bash
