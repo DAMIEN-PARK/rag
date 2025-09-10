@@ -23,12 +23,12 @@ class PGVectorRetriever(BaseRetriever):
             Document(
                 page_content=chunk.content,
                 metadata={
-                    "score": score,
+                    "distance": distance,
                     "chunk_id": chunk.id,
                     "document_id": chunk.document_id,
                 },
             )
-            for chunk, score in results
+            for chunk, distance in results
         ]
 
     async def _aget_relevant_documents(self, query: str, run_manager=None) -> List[Document]:
@@ -54,10 +54,10 @@ class PGVectorStore:
             Document(
                 page_content=chunk.content,
                 metadata={
-                    "score": score,
+                    "distance": distance,
                     "chunk_id": chunk.id,
                     "document_id": chunk.document_id,
                 },
             )
-            for chunk, score in results
+            for chunk, distance in results
         ]

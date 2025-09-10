@@ -191,8 +191,8 @@ curl -X POST http://localhost:5000/api/v1/rag/query \
 {
   "answer": "퇴직금은 ...",
   "sources": [
-    {"document_id":123,"chunk_id":456,"score":0.82,"snippet":"..."},
-    {"document_id":124,"chunk_id":400,"score":0.79,"snippet":"..."}
+    {"document_id":123,"chunk_id":456,"distance":0.82,"snippet":"..."},
+    {"document_id":124,"chunk_id":400,"distance":0.79,"snippet":"..."}
   ],
   "latency_ms": 842
 }
@@ -253,7 +253,7 @@ python -m app.services.rag.evaluator --dataset path/to/queries.jsonl --top_k 8
 // AnswerResponse
 {
   answer: string;
-  sources: {document_id:number; chunk_id:number; score:number; snippet:string;}[];
+  sources: {document_id:number; chunk_id:number; distance:number; snippet:string;}[];
   latency_ms?: number;
 }
 ```

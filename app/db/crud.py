@@ -94,13 +94,13 @@ def search_chunks_by_vector(
     stmt = (
         select(
             models.Chunk,
-            models.Embedding.vector.cosine_distance(query_vector).label("score"),
+            models.Embedding.vector.cosine_distance(query_vector).label("distance"),
         )
         .join(models.Embedding, models.Chunk.id == models.Embedding.chunk_id)
         .order_by(models.Embedding.vector.cosine_distance(query_vector))
         .limit(top_k)
     )
     return [
-        (chunk, float(score))
-        for chunk, score in db.execute(stmt).all()
+        (chunk, float(distance))
+        for chunk, distance in db.execute(stmt).all()
     ]
