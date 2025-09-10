@@ -51,7 +51,6 @@ RAG/
 │   ├── utils/           공통 유틸
 │   └── middleware/      CORS·Rate limit
 ├── alembic/             마이그레이션
-├── tests/               API/서비스/E2E
 ├── scripts/             ingest/rebuild/demo
 ├── docker/              Dockerfile·compose·nginx
 ├── configs/             logging·gunicorn
@@ -222,12 +221,6 @@ python -m app.services.rag.evaluator --dataset path/to/queries.jsonl --top_k 8
 * `scripts/ingest_file.py`: 단일 파일 CLI 인제스트
 * `scripts/rebuild_index.py`: 인덱스 재생성
 * `scripts/demo_query.py`: 간단 질의 데모
-
-## 테스트
-
-```bash
-pytest -q
-```
 
 ## 개발 팁
 

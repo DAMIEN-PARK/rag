@@ -56,7 +56,3 @@ def split_pdf(filepath, out_dir: Path | str | None = None, batch_size: int = 10)
         ret.append(str(output_file))
 
     return ret
-
-# 예시
-# sample_data = "test.pdf"
-# split_files = split_pdf(sample_data, batch_size=10)
