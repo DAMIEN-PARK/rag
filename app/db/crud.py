@@ -78,3 +78,16 @@ def create_chathistory(db: Session, log_in: ChatHistoryCreate) -> models.ChatHis
 
 def list_chathistory(db: Session) -> list[models.ChatHistory]:
     return db.query(models.ChatHistory).order_by(models.ChatHistory.created_at.desc()).all()
+
+
+def search_chunks_by_vector(
+    db: Session, query_vector: list[float], limit: int = 4
+) -> list[models.Chunk]:
+    """임베딩 벡터와 유사한 청크를 반환한다."""
+    return (
+        db.query(models.Chunk)
+        .join(models.Embedding)
+        .order_by(models.Embedding.vector.cosine_distance(query_vector))
+        .limit(limit)
+        .all()
+    )
