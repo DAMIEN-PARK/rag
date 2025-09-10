@@ -1,4 +1,4 @@
 *.png binary
-*.jpg binary
+*.toml binary
 *.md binary
 *.txt binary
