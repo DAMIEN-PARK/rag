@@ -2,7 +2,7 @@
  
 - FastAPI
 - LangChain/LangGraph
-- PostgreSQL/pgvector
+- PostgreSQL/pgvector (FAISS 미사용)
 
 문서 인제스트 → 하이브리드 검색(BM25+벡터) → LLM 생성 응답까지 하나의 백엔드로 제공
 
