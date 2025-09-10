@@ -10,6 +10,20 @@ app/services/ingestion/
 ├─ loader.py                  # 업로드→정규화 진입점
 └─ __init__.py
 
+지원 파일 형식: 현재 파이프라인은 **PDF(`.pdf`)**만 처리합니다. 스캔 PDF는 OCR 결과에 따라 실패할 수 있으며, 다른 확장자는 업로드 단계에서 거부됩니다.
+
+추가 확장자 지원 방법(예: `.docx`):
+
+1. `loader.py`에 확장자 분기와 변환 로직을 추가합니다.
+2. `preprocess/` 디렉터리에 해당 포맷을 PDF로 변환하거나 직접 파싱하는 모듈을 작성합니다(예: `convert_docx.py`).
+3. `parser.py`에서 새 모듈을 호출해 기존 파이프라인으로 넘겨줍니다.
+
+```python
+# loader.py 예시
+elif ext == ".docx":
+    input_pdf = convert_docx_to_pdf(path)
+```
+
 각 단계는 입력 → 출력만 명확히 한다
 
 1. loader.py
