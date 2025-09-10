@@ -8,6 +8,7 @@ from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 import numpy as np
 from dotenv import load_dotenv
 from app.utils import format_docs
+import faiss
 
 load_dotenv(override=True)
 
@@ -25,6 +26,16 @@ embeddings = OpenAIEmbeddings()
 # 단계 4: DB 생성(Create DB) 및 저장
 # 벡터스토어를 생성합니다.
 vectorstore = FAISS.from_documents(documents=split_documents, embedding=embeddings)
+
+# 첫 번째 벡터 확인
+vector = vectorstore.index.reconstruct(0)
+n_vectors = vectorstore.index.ntotal
+all_vectors = [vectorstore.index.reconstruct(i) for i in range(n_vectors)]
+all_vectors = np.array(all_vectors)
+
+# print(np.array(all_vectors))
+# 차원 수 출력
+# print("임베딩 차원 수:", vectorstore.index.d)
 
 # 단계 5: 검색기(Retriever) 생성
 # 문서에 포함되어 있는 정보를 검색하고 생성합니다.
