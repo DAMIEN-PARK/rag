@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>RAG TEST</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    table { border-collapse: collapse; margin-top: 10px; width: 100%; }
+    th, td { border: 1px solid #ddd; padding: 8px; }
+    th { background-color: #f2f2f2; }
+    #answer { margin-top: 20px; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <h1>RAG TEST</h1>
+  <section>
+    <h2>파일 업로드</h2>
+    <input type="file" id="fileInput" accept="application/pdf" />
+    <button id="uploadBtn">업로드</button>
+    <table id="fileTable">
+      <thead><tr><th>파일명</th><th>상태</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>프롬프트</h2>
+    <textarea id="prompt" rows="4" cols="80" placeholder="질문을 입력하세요..."></textarea><br />
+    <button id="askBtn">질문하기</button>
+    <div id="answer"></div>
+  </section>
+
+  <script>
+    const apiBase = 'http://localhost:5000/api/v1';
+    const fileTableBody = document.querySelector('#fileTable tbody');
+
+    function addFileRow(name, status) {
+      const row = document.createElement('tr');
+      row.innerHTML = `<td>${name}</td><td class="status">${status}</td>`;
+      fileTableBody.appendChild(row);
+      return row.querySelector('.status');
+    }
+
+    document.getElementById('uploadBtn').addEventListener('click', async () => {
+      const fileInput = document.getElementById('fileInput');
+      if (fileInput.files.length === 0) {
+        alert('업로드할 PDF 파일을 선택하세요.');
+        return;
+      }
+      const file = fileInput.files[0];
+      const statusCell = addFileRow(file.name, '업로드 중');
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      try {
+        const uploadRes = await fetch(`${apiBase}/ingestion/upload`, {
+          method: 'POST',
+          body: formData
+        });
+        if (!uploadRes.ok) throw new Error('업로드 실패');
+        const uploadData = await uploadRes.json();
+        statusCell.textContent = '처리 중';
+
+        await fetch(`${apiBase}/ingestion/run`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ pdf_path: uploadData.path, batch_size: 100 })
+        });
+        statusCell.textContent = '완료';
+      } catch (err) {
+        console.error(err);
+        statusCell.textContent = '실패';
+      }
+    });
+
+    document.getElementById('askBtn').addEventListener('click', async () => {
+      const question = document.getElementById('prompt').value.trim();
+      if (!question) {
+        alert('질문을 입력하세요.');
+        return;
+      }
+      const answerDiv = document.getElementById('answer');
+      answerDiv.textContent = '질의 중...';
+      try {
+        const res = await fetch(`${apiBase}/rag/query`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ question })
+        });
+        const data = await res.json();
+        answerDiv.textContent = data.answer || res.statusText;
+      } catch (err) {
+        console.error(err);
+        answerDiv.textContent = '오류 발생';
+      }
+    });
+  </script>
+</body>
+</html>
