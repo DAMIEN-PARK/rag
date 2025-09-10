@@ -1,17 +1,12 @@
 from __future__ import annotations
+
 from typing import Optional
-# from langchain_core.documents import Document
-# from langchain_core.embeddings import FakeEmbeddings
-# from langchain_core.language_models import (
-#     BaseLanguageModel,
-#     FakeListLLM,
-# )
-# from langchain_core.vectorstores import InMemoryVectorStore
-import os
+
+from dotenv import load_dotenv
+from langchain_core.documents import Document
 from langchain_core.language_models import BaseLanguageModel
-from langchain_core.vectorstores import VectorStore
+from langchain_core.vectorstores import InMemoryVectorStore, VectorStore
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
-from langchain_community.vectorstores.pgvector import PGVector
 
 from app.langchain.chains.qa_chain import build_qa_chain
 
@@ -28,19 +23,13 @@ class RAGService:
 
 
 def _build_default_service() -> RAGService:
-    """기본 PGVector 저장소와 OpenAI 기반 LLM로 구성된 RAGService 생성."""
+    """기본 InMemoryVectorStore와 OpenAI 기반 LLM로 구성된 RAGService 생성."""
 
-    database_url = os.environ.get("DATABASE_URL")
-    if not database_url:
-        raise RuntimeError("DATABASE_URL 환경 변수가 설정되어 있지 않습니다.")
-
+    load_dotenv()
     embedding = OpenAIEmbeddings()
-    vectorstore = PGVector(
-        connection_string=database_url,
-        embedding_function=embedding,
-        collection_name="rag_default",
-    )
-    llm = ChatOpenAI()
+    vectorstore = InMemoryVectorStore(embedding=embedding)
+    vectorstore.add_documents([Document(page_content="고양이는 귀엽다.")])
+    llm = ChatOpenAI(model_name="gpt-4o", temperature=0)
     return RAGService(vectorstore, llm)
 
 

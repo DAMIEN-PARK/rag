@@ -1,31 +1,27 @@
 """RAG API 엔드포인트 테스트."""
 import os
+
+import pytest
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from langchain_core.documents import Document
-from langchain_core.embeddings import FakeEmbeddings
-from langchain_core.language_models import FakeListLLM
 from langchain_core.vectorstores import InMemoryVectorStore
-from langchain_community.vectorstores.pgvector import PGVector
+from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+
 from app.api.v1.rag import router, get_rag_service
 from app.services.rag.service import RAGService
 
 
 def _create_service() -> RAGService:
-    embedding = FakeEmbeddings(size=32)
-    database_url = os.environ.get("DATABASE_URL")
-    if database_url:
-        store = PGVector(
-            connection_string=database_url,
-            embedding_function=embedding,
-            collection_name="test_rag_api",
-            pre_delete_collection=True,
-        )
-    else:
-        store = InMemoryVectorStore(embedding=embedding)
+    load_dotenv()
+    if not os.environ.get("OPENAI_API_KEY"):
+        pytest.skip("OPENAI_API_KEY is not set")
 
+    embedding = OpenAIEmbeddings()
+    store = InMemoryVectorStore(embedding=embedding)
     store.add_documents([Document(page_content="고양이는 귀엽다.")])
-    llm = FakeListLLM(responses=["고양이는 정말 귀엽습니다."])
+    llm = ChatOpenAI(model_name="gpt-4o", temperature=0)
     return RAGService(store, llm)
 
 
@@ -43,7 +39,9 @@ def test_query_returns_json():
 
     res = client.post("/api/v1/rag/query", json={"question": "고양이는 어때?"})
     assert res.status_code == 200
-    assert res.json() == {"answer": "고양이는 정말 귀엽습니다."}
+    answer = res.json()["answer"]
+    assert "고양" in answer
+    assert "귀엽" in answer
 
 
 def test_query_returns_text():
@@ -56,5 +54,6 @@ def test_query_returns_text():
         json={"question": "고양이는 어때?", "response_format": "text"},
     )
     assert res.status_code == 200
-    assert res.text == "고양이는 정말 귀엽습니다."
+    assert "고양" in res.text
+    assert "귀엽" in res.text
 
