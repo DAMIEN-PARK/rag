@@ -10,7 +10,7 @@ from app.langchain.chains.qa_chain import build_qa_chain
 from app.services.rag.vectorstore import PGVectorStore
 from app.services.chunk import get_embedding
 from app.db.session import SessionLocal
-
+load_dotenv(override=True)
 
 class RAGService:
     """질의 응답을 수행하는 간단한 RAG 서비스."""
@@ -31,7 +31,7 @@ class RAGService:
 def _build_default_service() -> RAGService:
     """pgvector 기반 벡터 검색과 OpenAI LLM으로 구성된 RAGService 생성."""
 
-    load_dotenv()
+    # load_dotenv()
     db = SessionLocal()
     vectorstore = PGVectorStore(db, get_embedding)
     llm = ChatOpenAI(model_name="gpt-4o", temperature=0)
