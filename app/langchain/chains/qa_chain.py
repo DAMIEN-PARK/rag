@@ -7,10 +7,10 @@ from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 # from langchain_openai import ChatOpenAI
 from langchain_core.language_models import BaseLanguageModel
-
+from langchain_core.vectorstores import VectorStore
 # load_dotenv(find_dotenv())
 
-def build_qa_chain(vectorstore: Any,llm: BaseLanguageModel, *, k: int = 4):
+def build_qa_chain(vectorstore: VectorStore, llm: BaseLanguageModel, *, k: int = 4):
     """벡터스토어 기반 QA 체인을 생성한다.
     Args:
         vectorstore: ``as_retriever`` 메서드를 제공하는 벡터스토어 인스턴스.
